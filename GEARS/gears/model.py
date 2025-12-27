@@ -134,9 +134,9 @@ class GEARS_Model(torch.nn.Module):
 
             ## get base gene embeddings
             if self.pretrained:
-                pre_in = x.clone().reshape(num_graphs, self.num_genes+1)
+                pre_in = x.clone().reshape(num_graphs, self.num_genes+1) # [n_genes + read_depth]
                 x = x.reshape(num_graphs, self.num_genes+1)[:,:-1]
-                emb = self.singlecell_model(pre_in)
+                emb = self.singlecell_model(pre_in) # depends on choose_binset, can be [n_genes], [n_genes + S token] or [n_genes + S_token + T_token]
                 if 'v1' in self.args['mode']:
                     pos_emb = self.emb_pos(torch.LongTensor(list(range(self.num_genes))).repeat(num_graphs, ).to(self.args['device']))
                 elif 'v2' in self.args['mode']:
@@ -144,6 +144,7 @@ class GEARS_Model(torch.nn.Module):
                 else:
                     print('error!')
                     exit()
+                emb = emb[:, :self.num_genes, :].contiguous() # only keep gene embeddings
                 emb = emb.view(-1, self.hidden_size)
             else:
                 x = x.reshape(num_graphs, self.num_genes+1)[:,:-1]
